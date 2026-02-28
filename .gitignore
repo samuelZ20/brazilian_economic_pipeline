@@ -1,0 +1,27 @@
+# --- Segurança (CRÍTICO) ---
+.env
+*.secrets
+credentials.json
+
+# --- Dados e Armazenamento (Peso) ---
+# Não subimos os dados brutos ou o storage do MinIO para o Git
+data/minio_data/
+*.parquet
+*.json
+*.csv
+*.db
+_delta_log/
+
+# --- Python e Ambiente ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.env
+.pytest_cache/
+
+# --- IDE e Notebooks ---
+.vscode/
+.idea/
+.ipynb_checkpoints/
