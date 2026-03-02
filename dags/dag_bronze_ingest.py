@@ -1,33 +1,37 @@
 import os
-from api_client import BacenAPIClient
-from db_manager import upload_file, ensure_bucket_exists
-from utils import generate_lake_path, save_to_parquet
+from datetime import datetime
+from src.api_client import BacenAPIClient
+from src.db_manager import upload_file, ensure_bucket_exists
+from src.utils import generate_lake_path, save_to_parquet
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def run_ingestion():
-    # 1. Preparação do ambiente
     ensure_bucket_exists()
     client = BacenAPIClient()
     
-    print("🎬 Iniciando Ingestão na Camada Bronze...")
+    # Lógica Dinâmica
+    now = datetime.now()
+    month = now.strftime('%m')
+    year = now.strftime('%Y')
+    
+    print(f"🎬 Ingestão Bronze Dinâmica: Referência {month}/{year}")
     series_data = client.get_all_series()
     
     for sid, data in series_data.items():
-        # 2. Organiza o caminho no estilo Hive (Partitioning)
+        # O generate_lake_path já deve ser dinâmico internamente
         lake_folder = generate_lake_path('bronze', sid)
         s3_path = f"{lake_folder}/data.parquet"
         
-        # 3. Salva localmente em formato binário otimizado
         temp_local_path = f"data/temp_serie_{sid}.parquet"
         save_to_parquet(data, temp_local_path)
+        upload_file(temp_local_path, s3_path)
         
-        # 4. Upload para o storage persistente
-        success = upload_file(temp_local_path, s3_path)
-        
-        # 5. Limpeza de arquivos temporários
-        if success and os.path.exists(temp_local_path):
+        if os.path.exists(temp_local_path):
             os.remove(temp_local_path)
 
-    print("🏁 Ingestão Bronze finalizada com sucesso!")
+    print("🏁 Ingestão Bronze finalizada!")
 
 if __name__ == "__main__":
     run_ingestion()
