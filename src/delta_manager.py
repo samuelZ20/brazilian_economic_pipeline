@@ -7,9 +7,10 @@ load_dotenv()
 class DeltaManager:
     def __init__(self):
         """
-        Gerencia configurações de storage para Delta Lake e Pandas.
+        Gerencia as configurações de storage para o ecossistema Delta Lake.
         """
-        # Opções para Delta Lake (delta-rs)
+        self.bucket = os.getenv('MINIO_BUCKET')
+        # Configurações para o motor Delta (Rust)
         self.delta_storage_options = {
             "AWS_ENDPOINT_URL": os.getenv('MINIO_ENDPOINT'),
             "AWS_ACCESS_KEY_ID": os.getenv('MINIO_ACCESS_KEY'),
@@ -19,25 +20,30 @@ class DeltaManager:
             "AWS_S3_ALLOW_UNSAFE_DISABLE_SSL": "true"
         }
         
-        # Opções para Pandas (s3fs) - Ajustado para maior compatibilidade
+        # Opções para compatibilidade com Pandas (s3fs)
         self.pandas_storage_options = {
             "key": os.getenv('MINIO_ACCESS_KEY'),
             "secret": os.getenv('MINIO_SECRET_KEY'),
-            "use_ssl": False, # Força HTTP para o MinIO local
+            "use_ssl": False,
             "client_kwargs": {
                 "endpoint_url": os.getenv('MINIO_ENDPOINT')
             }
         }
 
-    def write_to_silver(self, df, serie_id):
-        """Escreve a Delta Table na camada Silver."""
-        bucket = os.getenv('MINIO_BUCKET')
-        table_path = f"s3://{bucket}/silver/serie_{serie_id}"
-        
+    def _write_delta(self, df, layer, table_name):
+        """Método privado para evitar repetição de código (DRY)."""
+        path = f"s3://{self.bucket}/{layer}/{table_name}"
         write_deltalake(
-            table_path,
+            path,
             df,
             mode="overwrite",
             storage_options=self.delta_storage_options
         )
-        print(f"✅ Delta Table atualizada: {table_path}")
+        print(f"✅ Tabela Delta atualizada em {layer.upper()}: {path}")
+
+    def write_to_silver(self, df, serie_id):
+        self._write_delta(df, "silver", f"serie_{serie_id}")
+
+    def write_to_gold(self, df, table_name):
+        """Salva o dado refinado para analytics na Camada Gold."""
+        self._write_delta(df, "gold", table_name)
