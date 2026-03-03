@@ -1,5 +1,8 @@
 import os
 from datetime import datetime
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from src.api_client import BacenAPIClient
 from src.db_manager import upload_file, ensure_bucket_exists
 from src.utils import generate_lake_path, save_to_parquet
@@ -32,6 +35,20 @@ def run_ingestion():
             os.remove(temp_local_path)
 
     print("🏁 Ingestão Bronze finalizada!")
+
+with DAG('1_camada_bronze', start_date=datetime(2026, 1, 1), schedule_interval=None, catchup=False) as dag:
+    task_ingest = PythonOperator(
+        task_id='ingestao_bacen', 
+        python_callable=run_ingestion
+    )
+    
+    # Ao terminar, chama a próxima DAG do README
+    trigger_silver = TriggerDagRunOperator(
+        task_id='chamar_silver',
+        trigger_dag_id='2_camada_silver'
+    )
+    
+    task_ingest >> trigger_silver
 
 if __name__ == "__main__":
     run_ingestion()
