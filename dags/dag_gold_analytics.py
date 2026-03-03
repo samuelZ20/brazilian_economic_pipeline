@@ -32,6 +32,13 @@ def run_gold_pipeline():
     except Exception as e:
         print(f"❌ Erro na geração da Gold: {e}")
 
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime
+
+with DAG('3_camada_gold', start_date=datetime(2026,1,1), schedule_interval=None) as dag:
+    task_analytics = PythonOperator(task_id='calculo_juro_real', python_callable=run_gold_pipeline)
+
 if __name__ == "__main__":
     # Nota: Precisamos adicionar o método write_to_gold no seu DeltaManager
     run_gold_pipeline()
