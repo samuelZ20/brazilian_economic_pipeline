@@ -4,38 +4,53 @@ Pipeline de dados **End-to-End** que extrai indicadores econômicos do **Banco C
 
 ---
 
-## 🏗️ Arquitetura e Fluxo de Dados
+## 🏗️ Arquitetura
 
-O projeto utiliza o **Apache Airflow** para orquestrar o fluxo entre as camadas, garantindo a integridade dos dados através de transações **ACID** do Delta Lake.
+```mermaid
+flowchart TD
+    API([BACEN SGS API]) -->|REST JSON| BRONZE
 
-### 🔹 Infraestrutura
+    subgraph INFRA ["Infraestrutura"]
+        SETUP["dag_setup_db — @once"]:::infra
+        CHECK["dag_check_connection — @hourly"]:::infra
+    end
 
-- Configuração automática de buckets  
-- Validação de conectividade via DAGs de setup  
+    subgraph ETL ["Pipeline ETL — Medallion"]
+        BRONZE["dag_bronze_ingest — @daily"]:::bronze
+        SILVER["dag_silver_transform — @daily"]:::silver
+        GOLD["dag_gold_analytics — @daily"]:::gold
+    end
 
-### 🥉 Camada Bronze
+    SETUP -.->|cria buckets e tabelas| BRONZE
+    CHECK -.->|valida API e storage| BRONZE
 
-- Ingestão de dados brutos da API **SGS do BACEN**
+    BRONZE --> DB_B[(bronze_indicators)]
+    DB_B --> SILVER
+    SILVER --> DB_S[(silver_indicators)]
+    DB_S --> GOLD
+    GOLD --> DB_G[(gold_analytics)]
 
-### 🥈 Camada Silver
+    subgraph STORAGE ["MinIO — Object Storage"]
+        DB_B
+        DB_S
+        DB_G
+    end
 
-- Limpeza  
-- Padronização  
-- Tipagem dos dados  
+    DB_G -->|DuckDB / Notebooks| USER([Usuario Final])
 
-### 🥇 Camada Gold
-
-- Cálculo de indicadores analíticos  
-- Exemplo: **Juro Real mensal**
+    classDef infra fill:#6c757d,color:#fff,stroke:none
+    classDef bronze fill:#cd7f32,color:#fff,stroke:none
+    classDef silver fill:#999,color:#fff,stroke:none
+    classDef gold fill:#b8860b,color:#fff,stroke:none
+```
 
 ---
 
 ## 🛠️ Stack Tecnológica
 
 - **Orquestração:** Apache Airflow 2.7.1  
-- **Armazenamento:** MinIO (S3-Compatible Object Storage)  
+- **Armazenamento:** MinIO (S3-Compatible)  
 - **Processamento:** Python (Pandas & Delta-rs)  
-- **Análise:** DuckDB & Jupyter Notebooks  
 - **Infraestrutura:** Docker & Docker Compose  
 
 ---
@@ -45,71 +60,67 @@ O projeto utiliza o **Apache Airflow** para orquestrar o fluxo entre as camadas,
 Conforme organizado no ambiente de desenvolvimento:
 
 ```plaintext
-├── dags/                          # Orquestração (Airflow)
-│   ├── dag_bronze_ingest.py        # ETL: API → Bronze
-│   ├── dag_silver_transform.py     # ETL: Bronze → Silver
-│   ├── dag_gold_analytics.py       # ETL: Silver → Gold
-│   ├── dag_setup_db.py             # Inicialização de infraestrutura
-│   ├── dag_check_connection.py     # Monitoramento de serviços
-│   └── lakehouse_dag.py            # DAG unificada do pipeline
+├── dags/                      # Orquestração (Airflow)
+│   ├── dag_bronze_ingest.py   # Extração API → Bronze
+│   ├── dag_silver_transform.py# Transformação Bronze → Silver
+│   ├── dag_gold_analytics.py  # Indicadores Silver → Gold
+│   ├── dag_setup_db.py        # Inicialização de Buckets
+│   ├── dag_check_connection.py # Validação de conectividade
+│   └── lakehouse_dag.py       # DAG unificada do pipeline
 │
-├── src/                           # Módulos de Lógica (Core)
-│   ├── api_client.py               # Consumo da API BACEN
-│   ├── db_manager.py               # Interface com MinIO/S3
-│   ├── delta_manager.py            # Operações Delta Lake
-│   ├── transform.py                # Regras de limpeza (Silver)
-│   ├── analytics.py                # Métricas de negócio (Gold)
-│   └── utils.py                    # Funções auxiliares
+├── src/                       # Lógica de Processamento (Core)
+│   ├── api_client.py          # Cliente REST para o BACEN
+│   ├── db_manager.py          # Conexão com MinIO/S3
+│   ├── delta_manager.py       # Operações Delta Lake
+│   ├── transform.py           # Limpeza e Padronização
+│   └── analytics.py           # Cálculos de Juro Real e Médias
 │
-├── data/minio_data/                # Volume de persistência do MinIO
-├── notebooks/                      # Exploração de dados e visualização
-├── docker-compose.yml              # Configuração dos serviços Docker
-└── .env                            # Variáveis de ambiente
+├── data/minio_data/           # Persistência física do MinIO
+├── notebooks/                 # Exploração e Visualização
+├── docker-compose.yml         # Configuração dos serviços
+└── .env                       # Variáveis de ambiente
 ```
 
 ---
 
 ## 🚀 Como Executar
 
-### 1️⃣ Inicialização do Ambiente
+### 1️⃣ Inicialização
 
-Clone o repositório e suba os contêineres:
+Suba a infraestrutura completa com um único comando:
 
 ```bash
 docker compose up -d
 ```
 
-> **Nota:** O Airflow instalará automaticamente as dependências necessárias no boot via `_PIP_ADDITIONAL_REQUIREMENTS`.
+O Airflow instalará automaticamente as dependências (`deltalake`, `pandas`, `boto3`) durante o boot.
 
 ---
 
-### 2️⃣ Acesso aos Serviços
+### 2️⃣ Acesso
 
-#### 🔹 Airflow UI
-
-- URL: http://localhost:8080  
-- Usuário: `admin`  
-
-Para obter a senha:
+- **Airflow:** http://localhost:8080  
+  - User: `admin`  
+  - Senha:
 
 ```bash
 docker exec -it airflow_app cat standalone_admin_password.txt
 ```
 
-#### 🔹 MinIO Console
-
-- URL: http://localhost:9001  
-- Usuário: `admin`  
-- Senha: `password`  
+- **MinIO:** http://localhost:9001  
+  - User: `admin`  
+  - Pass: `password`  
 
 ---
 
-### 3️⃣ Execução do Pipeline
+### 3️⃣ Execução
 
-No Airflow, execute as DAGs na seguinte ordem para o primeiro processamento:
+Dispare as DAGs na ordem:
 
-1. `dag_setup_db`  
-2. `dag_check_connection`  
-3. `lakehouse_dag`  
+```
+dag_setup_db ➔ lakehouse_dag
+```
 
-> Alternativamente, execute as DAGs de cada camada individualmente.
+---
+
+✨ **Projeto desenvolvido por Samuel Frizzone Cardoso – Ciência da Computação (UFLA).**
