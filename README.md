@@ -19,7 +19,7 @@ flowchart TD
         CHECK["dag_check_connection — @hourly"]:::infra
     end
 
-    subgraph ETL ["Pipeline ETL — Medallion"]
+    subgraph ETL ["Pipeline Medallion — Airflow"]
         BRONZE["1_camada_bronze — @daily"]:::bronze
         SILVER["2_camada_silver — @daily"]:::silver
         GOLD["3_camada_gold — @daily"]:::gold
@@ -40,7 +40,7 @@ flowchart TD
         DB_G
     end
 
-    DB_G -->|DuckDB / Notebooks| USER([Usuario Final])
+    DB_G -->|Delta Table| DASH([Streamlit Dashboard])
 
     classDef infra fill:#6c757d,color:#fff,stroke:none
     classDef bronze fill:#cd7f32,color:#fff,stroke:none
@@ -131,3 +131,4 @@ Isso irá processar automaticamente todas as camadas (**Bronze → Silver → Go
 ## ✨ Desenvolvido por
 
 **Samuel Frizzone Cardoso**
+
