@@ -36,7 +36,7 @@ def run_ingestion():
 
     print("🏁 Ingestão Bronze finalizada!")
 
-with DAG('1_camada_bronze', start_date=datetime(2026, 1, 1), schedule_interval=None, catchup=False) as dag:
+with DAG('1_camada_bronze', start_date=datetime(2026, 1, 1), schedule='@daily', catchup=False) as dag:
     task_ingest = PythonOperator(
         task_id='ingestao_bacen', 
         python_callable=run_ingestion

@@ -45,3 +45,25 @@ services:
     ports:
       - "8080:8080"
     command: standalone
+
+
+  dashboard:
+    image: python:3.10-slim
+    container_name: streamlit_dashboard
+    depends_on:
+      - minio
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=password
+      - MINIO_BUCKET=bacen-lake
+    volumes:
+      - ./src:/app/src
+      - .env:/app/.env
+    working_dir: /app
+    command: >
+      sh -c "pip install streamlit pandas deltalake plotly python-dotenv && 
+             streamlit run src/dashboard.py --server.port 8501 --server.address 0.0.0.0"
+    ports:
+      - "8501:8501"
+    

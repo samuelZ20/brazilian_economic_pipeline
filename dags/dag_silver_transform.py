@@ -35,7 +35,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
-with DAG('2_camada_silver', start_date=datetime(2026, 1, 1), schedule_interval=None, catchup=False) as dag:
+with DAG('2_camada_silver', start_date=datetime(2026, 1, 1), schedule='@daily', catchup=False) as dag:
     task_transform = PythonOperator(
         task_id='transform_bronze_to_silver',
         python_callable=run_silver_pipeline
