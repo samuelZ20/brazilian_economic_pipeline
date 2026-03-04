@@ -19,7 +19,7 @@ with DAG(
     'brazilian_economic_lakehouse',
     default_args=default_args,
     description='Pipeline de ponta a ponta: API Bacen -> Bronze -> Silver -> Gold',
-    schedule_interval='@monthly', # Roda uma vez por mês
+    schedule_interval='@daily',    
     catchup=False
 ) as dag:
 
