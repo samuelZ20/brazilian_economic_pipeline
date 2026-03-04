@@ -121,6 +121,67 @@ Suba a infraestrutura completa:
 ```bash
 docker compose up -d
 ```
+> **Nota:** No primeiro boot, o Airflow instalará as dependências do `requirements.txt`.  
+
+> Aguarde a mensagem **"Airflow is ready"** nos logs.
+
+
+
+---
+
+
+
+### 2️⃣ Acesso e Credenciais
+
+
+
+- **Airflow:** http://localhost:8080  
+
+  - User: `admin`  
+
+  - Senha:
+
+    ```bash
+
+    docker exec -it airflow_app cat standalone_admin_password.txt
+
+    ```
+
+
+
+- **MinIO:** http://localhost:9001  
+
+  - User: `admin`  
+
+  - Pass: `password`
+
+
+
+---
+
+
+
+### 3️⃣ Execução do Fluxo
+
+
+
+Ative e dispare a DAG:
+
+
+
+```
+
+brazilian_economic_lakehouse
+
+```
+
+
+
+Isso irá processar automaticamente todas as camadas (**Bronze → Silver → Gold**).
+
+
+
+---
 
 ### 🔗 Endpoints
 
@@ -133,5 +194,6 @@ docker compose up -d
 # ✨ Desenvolvido por
 
 **Samuel Frizzone Cardoso**
+
 
 
