@@ -57,6 +57,8 @@ A orquestração completa é realizada via **Airflow**, garantindo transações 
 ### 📊 Visualização do Pipeline (Graph View)
 
 Abaixo, a evidência do fluxo unificado `brazilian_economic_lakehouse` operando com sucesso em todas as etapas:
+<img width="1217" height="771" alt="image" src="https://github.com/user-attachments/assets/1dfb845b-d207-4f6e-a431-ad1bfd40f9b8" />
+
 
 - **Ingestão:** Coleta dinâmica de dados da API SGS.  
 - **Transformação:** Limpeza e tipagem para a camada Silver.  
@@ -129,3 +131,4 @@ docker compose up -d
 # ✨ Desenvolvido por
 
 **Samuel Frizzone Cardoso**
+
