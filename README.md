@@ -1,14 +1,14 @@
 # 🏦 Brazilian Economic Indicators — Delta Lake Pipeline
 
-Pipeline de dados **End-to-End** que extrai indicadores econômicos do Banco Central do Brasil (BACEN), processa através da arquitetura **Medallion** e armazena em um **Delta Lake local utilizando MinIO**.
+Pipeline de dados **End-to-End** que extrai indicadores econômicos do Banco Central do Brasil (BACEN), processa através da arquitetura **Medallion** e armazena em um **Delta Lake** local utilizando **MinIO**.
 
 ---
 
-## 🏗️ Arquitetura
+# 🏗️ Arquitetura do Projeto
 
 O fluxo segue uma orquestração rígida onde a infraestrutura é validada antes do processamento dos dados.
 
-### 📌 Diagrama do Fluxo
+## 📌 Diagrama do Fluxo
 
 ```mermaid
 flowchart TD
@@ -50,9 +50,33 @@ flowchart TD
 
 ---
 
-## 📂 Estrutura do Repositório
+# ⚙️ Orquestração (Apache Airflow)
 
-A organização do projeto separa a **orquestração (DAGs)** da **lógica de processamento (Módulos)**, facilitando a manutenção e testes isolados:
+A orquestração completa é realizada via **Airflow**, garantindo transações **ACID** e o cumprimento das dependências entre as camadas.
+
+### 📊 Visualização do Pipeline (Graph View)
+
+Abaixo, a evidência do fluxo unificado `brazilian_economic_lakehouse` operando com sucesso em todas as etapas:
+
+- **Ingestão:** Coleta dinâmica de dados da API SGS.  
+- **Transformação:** Limpeza e tipagem para a camada Silver.  
+- **Analytics:** Geração de indicadores e persistência em formato Delta na camada Gold.
+
+---
+
+# 📊 Visualização de Dados (Streamlit)
+
+A interface de visualização consome diretamente a **Camada Gold** no MinIO, permitindo uma análise interativa dos indicadores econômicos processados.
+
+## 📈 Dashboard de Indicadores
+
+O dashboard provê uma visão clara das taxas **SELIC** e **IPCA**, com filtros dinâmicos e métricas atualizadas.
+
+- Interface responsiva conectada ao Delta Lake via `delta-rs`.
+
+---
+
+# 📂 Estrutura do Repositório
 
 ```plaintext
 ├── dags/                      # Orquestração (Airflow)
@@ -61,74 +85,47 @@ A organização do projeto separa a **orquestração (DAGs)** da **lógica de pr
 │   ├── dag_gold_analytics.py  # Indicadores Silver → Gold
 │   ├── dag_setup_db.py        # Inicialização de infraestrutura
 │   ├── dag_check_connection.py # Monitoramento de serviços
-│   └── lakehouse_dag.py       # DAG unificada (brazilian_economic_lakehouse)
-├── src/                       # Módulos Core (Injetados em /dags/src/)
+│   └── lakehouse_dag.py       # DAG unificada
+├── src/                       # Módulos Core e Dashboard
 │   ├── api_client.py          # Cliente REST para o BACEN
-│   ├── db_manager.py          # Conexão S3/MinIO e gestão de buckets
-│   ├── delta_manager.py       # Operações ACID com Delta Lake
-│   ├── transform.py           # Limpeza e Padronização (Silver)
-│   └── analytics.py           # Cálculos de Juro Real (Gold)
-├── data/minio_data/           # Persistência física do Lake
-├── notebooks/                 # Exploração e Visualização de dados
+│   ├── db_manager.py          # Gestão S3/MinIO
+│   ├── delta_manager.py       # Operações Delta Lake
+│   ├── dashboard.py           # Interface Streamlit
+│   └── analytics.py           # Cálculos de Juro Real
 ├── docker-compose.yml         # Configuração dos microsserviços
 └── .env                       # Credenciais e Endpoints
 ```
 
 ---
 
-## 🛠️ Stack Tecnológica
+# 🛠️ Stack Tecnológica
 
 - **Orquestração:** Apache Airflow 2.7.1  
-- **Storage:** MinIO (S3-Compatible Object Storage)  
-- **Tabelas:** Delta Lake (via delta-rs) para transações ACID  
-- **Processamento:** Python (Pandas & Boto3)  
+- **Storage:** MinIO (S3-Compatible)  
+- **Tabelas:** Delta Lake (transações ACID)  
+- **Visualização:** Streamlit & Plotly  
 - **Infraestrutura:** Docker & Docker Compose  
 
 ---
 
-## 🚀 Como Executar
+# 🚀 Como Executar
 
-### 1️⃣ Inicialização
+## 1️⃣ Inicialização
 
-Suba a infraestrutura completa (Airflow, Postgres e MinIO):
+Suba a infraestrutura completa:
 
 ```bash
 docker compose up -d
 ```
 
-> **Nota:** No primeiro boot, o Airflow instalará as dependências do `requirements.txt`.  
-> Aguarde a mensagem **"Airflow is ready"** nos logs.
-
----
-
-### 2️⃣ Acesso e Credenciais
+### 🔗 Endpoints
 
 - **Airflow:** http://localhost:8080  
-  - User: `admin`  
-  - Senha:
-    ```bash
-    docker exec -it airflow_app cat standalone_admin_password.txt
-    ```
-
 - **MinIO:** http://localhost:9001  
-  - User: `admin`  
-  - Pass: `password`
+- **Dashboard:** http://localhost:8501  
 
 ---
 
-### 3️⃣ Execução do Fluxo
-
-Ative e dispare a DAG:
-
-```
-brazilian_economic_lakehouse
-```
-
-Isso irá processar automaticamente todas as camadas (**Bronze → Silver → Gold**).
-
----
-
-## ✨ Desenvolvido por
+# ✨ Desenvolvido por
 
 **Samuel Frizzone Cardoso**
-
