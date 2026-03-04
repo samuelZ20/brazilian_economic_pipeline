@@ -69,6 +69,8 @@ Abaixo, a evidência do fluxo unificado `brazilian_economic_lakehouse` operando 
 # 📊 Visualização de Dados (Streamlit)
 
 A interface de visualização consome diretamente a **Camada Gold** no MinIO, permitindo uma análise interativa dos indicadores econômicos processados.
+<img width="1576" height="777" alt="image" src="https://github.com/user-attachments/assets/8bc17984-e40f-434a-9e69-1786eeb62940" />
+
 
 ## 📈 Dashboard de Indicadores
 
@@ -131,4 +133,5 @@ docker compose up -d
 # ✨ Desenvolvido por
 
 **Samuel Frizzone Cardoso**
+
 
